@@ -8,4 +8,4 @@ We are the Group 7. Our group members are:
 5. <p><a href="https://github.com/yasinsariboun.html">Yasin Sari</a></p>
 
 ## Project Part 1
- is our Project Part 1.
+[Here](files/Group7_ProjectPart1.html) is our Project Part 1.
