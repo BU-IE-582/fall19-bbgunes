@@ -1,0 +1,264 @@
+---
+title: "IE 423 Project Part 1"
+author: "Group 7"
+date: "October 29, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Part 1
+The surface chosen for this task is a natural stone.
+
+## 1.1
+The image was read using the readJPEG function from jpeg library.
+
+```{r cars}
+library(jpeg)
+img<-readJPEG("colored.jpeg")
+str(img)
+```
+
+
+## 1.2
+The variable that stores the image is of 3D array structure. First two dimensions simply constitute a matrix of pixels in the image. The third dimension indicates the color channel which can be red(1), green(2), or blue(3). Hence the variable holds 512x512x3 = 786432 values that correspond to color density of each cell on a 0 to 1 scale.
+
+### 1.2.a
+The image is displayed through the following commmands:
+```{r}
+plot(c(0,512), c(0,512), xlab = "Width", ylab = "Height")
+rasterImage(img, 0, 0, 512, 512)
+```
+
+
+### 1.2.b
+The image was seperated as three submatrix each of which represents a different color channel. Then those channels are displayed at the same plot by parsing the screen. Each color channel was shown on a grey scale bar.
+
+
+```{r}
+imgr<- img[,,1]
+imgg<-img[,,2]
+imgb<-img[,,3]
+
+par(mfrow=c(3,1))
+image(t(imgr), col = grey.colors(12), xlab = "Image function for imgr (red channel)")
+image(t(imgg), col = grey.colors(12), xlab = "Image function for imgg (green channel)")
+image(t(imgb), col = grey.colors(12), xlab = "Image function for imgb (blue channel)")
+par(mfrow=c(1,1))
+
+```
+
+
+## 1.3
+The average of the columns for each channel are displayed as a line plot :
+
+```{r}
+columnmean_red<-colMeans(imgr)
+columnmean_green<-colMeans(imgg)
+columnmean_blue<-colMeans(imgb)
+
+par(mfrow=c(1,1))
+plot(c(0:512), ylim=c(0:1),xlab="Columns",ylab="Density(Mean of each column)", col='black', main = "Average of the columns for each channel")
+lines(columnmean_red, col='red')
+lines(columnmean_green, col='green')
+lines(columnmean_blue, col='blue')
+legend(312, 1, legend=c("Line for Red Channel", "Line for Green Channel", "Line for Blue Channel"),
+       col=c("red","green" ,"blue"), lty=1, cex=0.6)
+
+```
+
+## 1.4
+The image is vertically halved. Then, the part at the right hand side was subtracted from the one at the left hand side. Negative values were assigned to be zero. Each channel of the final image (256x512x3) are displayed on the same  plot using the rasterImage function.
+
+```{r}
+imgleft<-img[,1:256,]
+imgright<-img[,257:512,]
+imgfinal<-(imgleft-imgright)
+imgfinal<-imgfinal* (imgfinal>0)
+
+plot(c(0,256), c(0,1556), xlab = "Width", ylab = "Height")
+rasterImage(imgfinal[,,1], 0, 1045, 256, 1556)
+rasterImage(imgfinal[,,2], 0, 523, 256, 1034)
+rasterImage(imgfinal[,,3], 0, 0, 256, 512)
+
+```
+
+Since, most of the values are close to zero after the subtraction, the picture mostly includes dark shades as expected.
+
+## 1.5
+Median filtering with respect to 3 different window sizes was applied to the image with the following commands.
+
+#### Window size 5:
+
+```{r}
+wsize <- 5
+filteredimage5 <- img
+
+for (i in 1:512){
+  for (j in 1:512){
+    for (k in 1:3){
+      imgtemp5 <- filteredimage5[max(i-((wsize-1)/2),1):min(i+((wsize-1)/2),512),max(j-((wsize-1)/2),1):min(j+((wsize-1)/2),512),k] 
+      filteredimage5[i,j,k] <- median(imgtemp5)
+    }
+  }
+}
+
+plot(c(0,512), c(0,512), xlab = "Width", ylab = "Height")
+
+rasterImage(filteredimage5,0,0,512,512)
+
+
+```
+
+#### Window size 11:
+
+```{r}
+wsize <- 11
+filteredimage11 <- img
+
+for (i in 1:512){
+  for (j in 1:512){
+    for (k in 1:3){
+      imgtemp11 <- filteredimage11[max(i-((wsize-1)/2),1):min(i+((wsize-1)/2),512),max(j-((wsize-1)/2),1):min(j+((wsize-1)/2),512),k] 
+      filteredimage11[i,j,k] <- median(imgtemp11)
+    }
+  }
+}
+
+plot(c(0,512), c(0,512), xlab = "Width", ylab = "Height")
+
+rasterImage(filteredimage11,0,0,512,512)
+```
+
+#### Window size 31:
+
+```{r}
+wsize <- 31
+filteredimage31 <- img
+
+for (i in 1:512){
+  for (j in 1:512){
+    for (k in 1:3){
+      imgtemp31 <- filteredimage31[max(i-((wsize-1)/2),1):min(i+((wsize-1)/2),512),max(j-((wsize-1)/2),1):min(j+((wsize-1)/2),512),k] 
+      filteredimage31[i,j,k] <- median(imgtemp31)
+    }
+  }
+}
+
+plot(c(0,512), c(0,512), xlab = "Width", ylab = "Height")
+
+rasterImage(filteredimage31,0,0,512,512)
+
+
+```
+
+It is observed that when the window size increases image gets smoother. This is because the median values acquired from subsequtive iterations are pretty close to each other due to high intersection between consecutive windows.
+
+# Part 2
+
+The image was converted to black&white version using an image editor. Thus, the variable on hand became a 2D matrix.
+
+## 2.1
+
+```{r}
+bw<- readJPEG("bw.jpeg")
+str(bw)
+```
+
+```{r}
+hist(bw, breaks = 50)
+```
+
+
+By looking at the histogram, the probability distribution for the pixel values was assumed as normal.
+
+## 2.2
+
+Any normal distribution are characterized with two parameters which are mean and variance. The sample mean and the sample variance of pixel values were used as estimators for mean and variance.
+```{r}
+mu<- mean(bw)
+sd<- sd(bw)
+variance <- (sd^2)
+mu
+variance
+
+```
+
+## 2.3
+Lower and upper bounds were constructed using qnorm function with the parameters estimated in 2.2. 
+
+```{r}
+lowerbound<- qnorm(0.001, mean= mu, sd= sd)
+lowerbound
+upperbound<- qnorm(0.999, mean= mu, sd= sd)
+upperbound
+```
+
+Number of pixels that fall out of this interval can be found as follows:
+
+```{r}
+sum(bw< lowerbound) #Number of pixels that are extremely dark
+sum(bw> upperbound) #Number of pixels that are extremely bright
+```
+
+
+Then, a variable for which the values that are out of these bounds are changed to zero (black color) is constructed using the following logic:
+
+```{r}
+bw1 <- (bw< upperbound)*(bw > lowerbound)*bw
+plot(c(0,512), c(0,1124), xlab = "Width", ylab = " ")
+rasterImage(bw, 0, 612, 512, 1124)
+rasterImage(bw1,0, 0, 512, 512 )
+```
+
+These way, the outliers that are either extremely bright or dark are identified. Comparing the original and the edited versions of the picture, one can easily detect the outliers that fall into the right side of the interval since the color change from bright tones to black creates a high contrast. However it is not as obvious for the outliers that fall into the left side of the interval, because these outliers were already quite dark.
+
+
+## 2.4
+Since local structures give more insight on the quality of the surface in this case, performing image operations on the patches instead of on the whole picture might be more beneficial. For this task, the picture was divided into 100 mutually exclusive patches with size of 51x51. Considering large number of inspections needed to check the distribution of all patches, a sample of size 5 was drawn using the following commands:
+
+```{r}
+set.seed(7)
+for(k in 1:5){
+i<- floor(runif(1, min=0, max=10)) #Generates a random integer between 0 and 9
+j<- floor(runif(1, min=0, max=10)) #Generates a random integer between 0 and 9
+randompatch <- bw[(1+(51*i)):(51+(51*i)),(1+(51*j)):(51+(51*j))] 
+hist(randompatch, breaks = 20)
+}
+```
+
+In the light of these histograms, distribution of individual patches were also assumed to be normal.
+
+The original picture was edited patch by patch through the following commands:
+```{r}
+
+bw2 <- bw
+outliers<- 0
+for (i in 0:9){
+  for (j in 0:9){
+    bwtemp <- bw2[(1+(51*i)):(51+(51*i)),(1+(51*j)):(51+(51*j))] 
+    mutemp <-mean(bwtemp)
+    sdtemp <-sd(bwtemp)
+    lbtemp <- qnorm(0.001,mean=mutemp, sd=sdtemp)
+    ubtemp <- qnorm(0.999,mean=mutemp, sd=sdtemp)
+    outliers<- outliers + sum(bw< lowerbound) + sum(bw> upperbound)
+    bw2[(1+(51*i)):(51+(51*i)),(1+(51*j)):(51+(51*j))] <- (bwtemp<ubtemp)*(bwtemp>lbtemp)*bwtemp
+  }
+}
+
+plot(c(0,512), c(0,1124), xlab = "Width", ylab = " ")
+rasterImage(bw, 0, 612, 512, 1124)
+rasterImage(bw2,0, 0, 512, 512 )
+```
+
+```{r}
+outliers #Number of outliers
+```
+
+A larger amount of pixels were labeled as outliers compared to 2.3. This was due to the higher similarity among the pixels on the same patch resulting in lower variation. Therefore, relatively small deviations from the patch mean may cause an outlier diagnosis.
+
+
+
