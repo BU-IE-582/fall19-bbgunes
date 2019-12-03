@@ -9,3 +9,7 @@ We are the Group 7. Our group members are:
 
 ## Project Part 1
 [Here](files/Group7_ProjectPart1.html) is our Project Part 1.
+
+## Project Part 2
+
+Here is our Project Part 1.
