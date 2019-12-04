@@ -1,0 +1,150 @@
+---
+title: "IE423 Project Part 2"
+author: "Group 7"
+date: "04 12 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Part 1
+The image is transformed to grayscale by using an image editor. By readJPEG function of the jpeg library, the image converted to a 400x400x3 matrix. Since there are three identical levels in this matrix, only one of them considered. Since adjustments will be done on the image, we defined 2 other matrices to which we will conduct row and column operations.
+
+```{r}
+library(jpeg)
+
+img_bw<-readJPEG("/Users/mac/BW.jpg")
+
+plot(c(0,400), c(0,400), xlab = "Width", ylab = "Height")
+rasterImage(img_bw, 0, 0, 400, 400)
+
+bw<-img_bw[,,1]
+bw_row<-bw
+bw_col<-bw
+
+```
+
+
+
+## Task a
+
+UCL and LCL is constructed using the mean and standard deviation of the corresponding row's pixels by using matrix operations and logical statements.The 6σ criteria are applied and  If the pixel is an outlier, it is colored to black by changing its pixel value to zero. 
+
+Then the resulting image with the black pixels is shown using the rasterImage function.
+
+```{r}
+
+for (i in 1:400) {
+  bw_row[i,]<-bw[i,]*(1-(bw[i,]>mean(bw[i,])+3*sd(bw[i,])))*(1-(bw[i,]<mean(bw[i,])-3*sd(bw[i,])))
+}
+
+plot(c(0,400), c(0,400), xlab = "Width", ylab = "Height")
+rasterImage(bw_row, 0, 0, 400, 400)
+
+```
+
+## Task b
+The same procedure is applied for the columns. Resulting image can be seen below.
+
+
+```{r}
+for (i in 1:400) {
+  bw_col[,i]<-bw[,i]*(1-(bw[,i]>mean(bw[,i])+3*sd(bw[,i])))*(1-(bw[,i]<mean(bw[,i])-3*sd(bw[,i])))
+}
+
+plot(c(0,400), c(0,400), xlab = "Width", ylab = "Height")
+rasterImage(bw_col, 0, 0, 400, 400)
+```
+
+
+## Part 1 Discussion and Comments
+
+When we look at our image, we see that the background is smooth and unicolor with vertical and horizontal black scratchs, which are mostly in the shape of plus signs. Our aim is to detect these scratches.
+
+In part a, we construct 3 sigma limits for each row and we detect outliers and turn into black. An interesting observation is that, when we apply these limits for rows, our resulting image detects mostly the vertical scratches. That is because horizontal scratches change the mean of each row and it is harder to detect them, whereas the vertical scratches are easily detected within each row because they don't occur as frequently as the horizontal scratches in the row.
+
+The same trend is also valid for the part b. This time, the horizontal scratches are easily detected at each column by the same logic. Thus, the resulting image shows mostly the horizontal scratches.
+
+You can also see the images below:
+Top image being the original, bottom left being the part b(column) and the bottom right image being the part a(row) image.
+
+
+```{r}
+plot(c(0,900), c(0,900), xlab = "Width", ylab = "Height")
+rasterImage(bw, 250, 500, 650, 900)
+rasterImage(bw_row, 500, 0, 900, 400)
+rasterImage(bw_col, 0, 0, 400, 400)
+```
+
+
+#Part 2
+
+The image is read, then a matrix(periphery) that has 117x117 rows and 51x51 columns is formed to analyze chunks with a window a size of 51x51. Every third window is analyzed to reduce the computational work. Each row (117x117) of this matrix represents the windows of the image that are going to be analyzed and each column (51x51) represents an element of those windows. 
+
+```{r}
+library(jpeg)
+img<-readJPEG("/Users/mac/BW.jpg")
+img<-img[,,1]
+
+str(img)
+periphery<-matrix(0, nrow = 117*117, ncol = 2601)
+for (i in seq(26, 374, by = 3)) {
+  for (j in seq(26, 374, by = 3)) {
+    periphery[((i-26)%/%3)*117+((j-25)%/%3)+1,]<-as.vector(t(img[(i-25):(i+25),(j-25):(j+25) ]))
+  }
+}
+
+```
+
+## Linear Regression
+
+A window in the image has 51x51 pixels. These pixels are stored in the rows of the matrix. All the pixels in a row except the middle pixel are used as predictors for the middle one (1301th element). A linear regression model is used on the matrix's 1301. element and the resulting residuals are plotted. We observed that the residuals are distributed around zero and that they have constant variance.
+
+
+```{r}
+
+frameformodel<-data.frame(periphery)
+lmmodel<- lm(X1301~., data= frameformodel)
+plot(residuals(lmmodel))
+
+```
+
+The second observation from the histogram is that the residuals follow normal distribution with mean zero.
+
+```{r}
+hist(residuals(lmmodel))
+```
+
+
+## Corrected Image
+
+The residuals from the linear regression model are stored in vectres. A binaryvec array is created to represent the residuals that are out of control as black pixels. This array is then transformed into a 117x117 matrix and combined with the original one to get the final image:
+
+```{r}
+
+vectres<- as.vector(residuals(lmmodel))
+binaryvec <- 0
+binaryvec <- (vectres>(-3*sd(vectres))) * (vectres<(3*sd(vectres))) 
+
+dim(binaryvec)<- c(117,117)
+
+img[seq(26, 374, by = 3),seq(26, 374, by = 3)]<-img[seq(26, 374, by = 3),seq(26, 374, by = 3)]*binaryvec
+plot(c(0,400),c(0,400), xlab="width", ylab="height")
+rasterImage(img, 0, 0, 400, 400)
+
+```
+
+
+## Comments
+
+It can be seen that the black pixels appear mostly around the vertical and horizontal lines. This is expected since in the analysis of the windows including darker lines, more out of control elements are produced.
+
+### Recommendation
+
+As the problem description states, there is strong autocorrelation among the explanatory variables of our current regression model. A better way to handle the problem would be to adopt a stepwise regression that excludes the variables that cannot make significant difference.
+
+Another strategy would be to benefit from the Variance Inflation Factor metric. Vif shows how well one explanatory variable can be expressed using others. By looking at the vif values we can eliminate the variables with high vif values.
+
