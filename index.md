@@ -17,3 +17,5 @@ We are the Group 7. Our group members are:
 ## Project Part 3
 
 [Here](files/Group7_IE423ProjectPart3.html) is our Project Part 3.
+
+[Here](files/Group7_IE423ProjectPart3.html.zip) is our Project Part 3 zip.
