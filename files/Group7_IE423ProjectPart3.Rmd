@@ -1,0 +1,359 @@
+---
+title: "IE423ProjectPart3"
+author: "Group7"
+date: "05 01 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+
+Linen is a textile made from flax plant, which is costlier than other means of manufacturing textile, however it has qualities that manufacturers are interested in such as its strength and its incredible absorbing power compared to cotton. 
+
+The nature of the process of linen manufacturing brings many potential unwanted defects. These defects may be due to an assignable causes like a problem in one of the machines (i.e: one of the wheel teeth being broken) or problem with a specific type of yarn used for knitting. They may also be randomly present due to the needle piercing at the incorrect place or other uncontrollable causes. 
+
+Detection of these defects is important. Some companies report up to 4% fabric defect in their production. It is not feasible for people to try to observe the defects themselves due to the large quantities used in production. Image detection systems saves us valuable time, a good detection system may find errors in the fabric that could be missed by human eye and making a standard defect detection system could give us valuable information about the cause of the problem. (assignable or random cause)
+
+
+## Background Information
+
+
+The process monitoring on linen images are generally classified into several different methods. 
+
+Structural approaches are used in very basic fabric textures. They consider the texture being composed of textural primitives and look for any abnormalities. This makes them unreliable (only reliable in detection of defects in very regular patterned fabrics)
+
+There are multiple statistical approach methods that include the usage of co-occurrence matrix, histogram features, auto-correlation function and mathematical morphology approaches. 
+
+Histogram based approaches have low mathematical complexity and they are very easy to implement but their reliability is low for most of the possible defects. 
+
+Usage of co-occurence matrix has a high computational cost so this method is problematic for high resolution images. They are known to achieve an up to 90% level accuracy when detecting defects. However they can only be used in a uniform type of fabric. Noise very negatively affects the success rate of this method, so a filtering stage is appropriate and adds to the already high computational cost.
+
+Auto-correlation based approaches again have a high computational cost. Combining this method with morphological approaches create a detection method that is robust to lighting changes in the images. 
+
+Mathematical morphology based approaches are most widely used in addition to the previous two methods. This can increase the success rate of detection up to 96%.
+
+Spectral approaches try to remove the basics of the image and tries to generalize the image. This requires a high degree of periodicity so they are not effective in detecting defects in random patterns. This approach include wavelet transform, fourier transform and gabor transform. Wavelet transform has a high accuracy rate and can detect different defect types with different "mother wavelets". It has high computational cost and image component interference can have a negative impact on the result. Fourier transform method is very robust to the orientation of the defect, it has convenient calculation time, however it cannot localize the area with the defect in the spatial domain and it is unable to detect problems in random patterns. The last specral approach is the one we chose, which is gabor transform. It is exellent in detecting defects and very adaptive, however it has high computational cost and the choice of filter parameters is quite difficult.
+
+Model based approaches include AR model and gaussian markov random field model. In these models, relationship between pixels and abrubt changes are calculated. The visual textural information is extracted from the image in these methods. They can be used together with different methods,but they are more sensitive to noise and lighting changes than the other methods. They are mostly insufficient methods by themselves.
+
+Learning approaches require a high amount of initial set of data to construct their algorithm. This method is effective due to the availability of different learning methods. Their real life performance is suitable in most industrial approaches. However, if the feature vector of our image is large, the computational complexity becomes too much.
+
+Hybrid approaches are also possible, combining different approaches discussed above to have a better defect detection system. Hybrid approaches are know to raise the accuracy levels of the methods used.
+
+Comparison studies are made and it is found that different detection methods are suitable for different fabrics. Since the studies use different imaging techniques and various types of fabrics and defects, the approach must be determined according to the defect and fabric type.
+
+## Approach
+
+The method we selected is gabor transform. The filter parameters are found by identifying the defects with the corresponding parameters such as lamda corresponding to defect width and the defect orientation corresponding to theta parameter. Control charts are constructed with appropriate control limits. 3 sigma limits for rows and for columns are used because they are good at detecting the out of control situations, in this case the defects.
+
+Depending on the specific defects in some of the images, 2-sigma or 4-sigma limits seemed better in detecting these defects, however the usage of 3-sigma control limits were mostly sufficient. 
+
+
+
+## Results
+
+We first used library functions to use necessary libraries for image processing. Then we defined the directory which includes our images as image_dir variable. Then we defined the showlines function which shows us the average value of columns and means. Showlines function is important function which gives us insights about the fabric and the type of it. Afterwards, we used readImage function to read the image and then converted it into grayscale by using channel function. We applied grayscaling to all 20 images.
+
+```{r}
+
+
+
+library(jpeg)
+library(EBImage)
+library(class)
+library(kernlab)
+library(wvtool)
+
+
+image_dir <- "/Users/mac/Desktop/2019-2020/IE423/Images"
+
+showlines<-function(img){
+img_temp<- img[,,1]
+columnmean<-colMeans(img_temp)
+rowmean<-rowMeans(img_temp)
+plot(c(0:512), ylim=c(0:1),xlab="Columns",ylab="Density(Mean of each column)", col='black', main = "Average of cols and means")
+lines(columnmean, col="blue")
+lines(rowmean)
+}
+
+
+img1 <- readImage(file.path(image_dir, "Fabric1.jpg"))
+grayimg1 <- channel(img1, "gray")
+
+img2 <- readImage(file.path(image_dir, "Fabric2.jpg"))
+grayimg2 <- channel(img2, "gray")
+
+img3 <- readImage(file.path(image_dir, "Fabric3.jpg"))
+grayimg3 <- channel(img3, "gray")
+
+img4 <- readImage(file.path(image_dir, "Fabric4.jpg"))
+grayimg4 <- channel(img4, "gray")
+
+img5 <- readImage(file.path(image_dir, "Fabric5.jpg"))
+grayimg5 <- channel(img5, "gray")
+
+img6 <- readImage(file.path(image_dir, "Fabric6.jpg"))
+grayimg6 <- channel(img6, "gray")
+
+img7 <- readImage(file.path(image_dir, "Fabric7.jpg"))
+grayimg7 <- channel(img7, "gray")
+
+img8 <- readImage(file.path(image_dir, "Fabric8.jpg"))
+grayimg8 <- channel(img8, "gray")
+
+img9 <- readImage(file.path(image_dir, "Fabric9.jpg"))
+grayimg9 <- channel(img9, "gray")
+
+img10 <- readImage(file.path(image_dir, "Fabric10.jpg"))
+grayimg10 <- channel(img10, "gray")
+
+img11 <- readImage(file.path(image_dir, "Fabric11.jpg"))
+grayimg11 <- channel(img11, "gray")
+
+img12 <- readImage(file.path(image_dir, "Fabric12.jpg"))
+grayimg12 <- channel(img12, "gray")
+
+img13 <- readImage(file.path(image_dir, "Fabric13.jpg"))
+grayimg13 <- channel(img13, "gray")
+
+img14 <- readImage(file.path(image_dir, "Fabric14.jpg"))
+grayimg14 <- channel(img14, "gray")
+
+img15 <- readImage(file.path(image_dir, "Fabric15.jpg"))
+grayimg15 <- channel(img15, "gray")
+
+img16 <- readImage(file.path(image_dir, "Fabric16.jpg"))
+grayimg16 <- channel(img16, "gray")
+
+img17 <- readImage(file.path(image_dir, "Fabric17.jpg"))
+grayimg17 <- channel(img17, "gray")
+
+img18 <- readImage(file.path(image_dir, "Fabric18.jpg"))
+grayimg18 <- channel(img18, "gray")
+
+img19 <- readImage(file.path(image_dir, "Fabric19.jpg"))
+grayimg19 <- channel(img19, "gray")
+
+img20 <- readImage(file.path(image_dir, "Fabric20.jpg"))
+grayimg20 <- channel(img20, "gray")
+
+```
+
+Then we used gabor filters to each grayscaled images. Because of the different types of defects and different types of fabrics, we had to change parameters of gabor filter functions. Gabor filter has lamda, theta, bw and asp. Asp is the parameter of ellipticity of the function. For line shaped defects we took asp parameter as zero, indicating that gabor function is also line and for the circle shaped defects such as image 18 and 20, we took asp parameter as one, indicating that gabor function has circular ellipticity. Other than that theta is important in such a way that it indicates the orientation of parallel strips. For example, image 4 has horizontal line defect, so we took theta value as zero whereas image 5 has vertical line defect. So we took theta as 90, meaning the orientation of parallel strips has changed.
+Other important parameter is lamda. It represents the wavelength of the cosine part of gabor function. We interpreted this as the width of defects for images. A good example of this is that, lamda values 20 and 30 were good to detect the small width defects. However, image 11 has a defect with a large width. So, we took lamda as 90 for this image and we were able to detect the defect. So, depending on the width of the defects, we need to change lamda values.
+
+Phi parameter corresponds to phase offset of the cosine part of the Gabor filter. We didn't find any good improvements by changing the phi value and we took phi zero for our images.
+
+Last parameter is the bw parameter and it corresponds to half responce spatial frequency. Bw values lower than 1 didn't produce any meaningful images, bw values of 3 and 5 were good in defect detection. So we took bw values as 3 and 5 mostly.
+
+By applying the gabor filters depending on the defect type, we were able to find meaningful outputs and filtered images. 
+
+```{r}
+gabor1<-gabor.filter(grayimg1, lamda=25, theta=90, bw=1.5, phi=0, asp=0, disp=TRUE)
+
+gabor2<-gabor.filter(grayimg2, lamda=30, theta=90, bw=3, phi=0, asp=0, disp=TRUE)
+
+gabor3<-gabor.filter(grayimg3, lamda=20, theta=90, bw=5, phi=0, asp=1, disp=TRUE)
+
+gabor4<-gabor.filter(grayimg4, lamda=20, theta=90, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor5<-gabor.filter(grayimg5, lamda=20, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor6<-gabor.filter(grayimg6, lamda=30, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor7<-gabor.filter(grayimg7, lamda=30, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor8<-gabor.filter(grayimg8, lamda=30, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor9<-gabor.filter(grayimg9, lamda=30, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor10<-gabor.filter(grayimg10, lamda=30, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor11<-gabor.filter(grayimg11, lamda=90, theta=90, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor12<-gabor.filter(grayimg12, lamda=30, theta=90, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor13<-gabor.filter(grayimg13, lamda=50, theta=90, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor14<-gabor.filter(grayimg14, lamda=30, theta=90, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor15<-gabor.filter(grayimg15, lamda=20, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor16<-gabor.filter(grayimg16, lamda=20, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor17<-gabor.filter(grayimg17, lamda=40, theta=0, bw=5, phi=0, asp=0, disp=TRUE)
+
+gabor18<-gabor.filter(grayimg18, lamda=35, theta=45, bw=5, phi=0, asp=1, disp=TRUE)
+
+gabor19<-gabor.filter(grayimg19, lamda=30, theta=45, bw=5, phi=0, asp=1, disp=TRUE)
+
+gabor20<-gabor.filter(grayimg20, lamda=40, theta=60, bw=1.5, phi=0, asp=1, disp=TRUE)
+
+```
+
+Because that gabor.filter function returns large list as output, we introduced gaborcevir function, which returns the 512x512 matrix of the image. By converting into matrix, we could be able to do control charting operation for the images. After introducing this function, we used this function for each image and gathered gabor filtered images for all 20 images.
+
+```{r}
+Gaborcevir<- function(gabor){
+filtgab<-gabor[4]
+output <- matrix(unlist(filtgab), ncol=512, byrow = TRUE)
+output<-normalize(output)
+return(output)
+}
+
+filt1<-Gaborcevir(gabor1)
+filt2<-Gaborcevir(gabor2)
+filt3<-Gaborcevir(gabor3)
+filt4<-Gaborcevir(gabor4)
+filt5<-Gaborcevir(gabor5)
+filt6<-Gaborcevir(gabor6)
+filt7<-Gaborcevir(gabor7)
+filt8<-Gaborcevir(gabor8)
+filt9<-Gaborcevir(gabor9)
+filt10<-Gaborcevir(gabor10)
+filt11<-Gaborcevir(gabor11)
+filt12<-Gaborcevir(gabor12)
+filt13<-Gaborcevir(gabor13)
+filt14<-Gaborcevir(gabor14)
+filt15<-Gaborcevir(gabor15)
+filt16<-Gaborcevir(gabor16)
+filt17<-Gaborcevir(gabor17)
+filt18<-Gaborcevir(gabor18)
+filt19<-Gaborcevir(gabor19)
+filt20<-Gaborcevir(gabor20)
+
+```
+
+Lastly, we introduced controlchartedphoto function. This function uses filtered image to set 3 sigma limits for each column and for each row of the image. After constructing two control charts, one for row control chart and one for column control chart; we applied both of the control charts on our original grayscaled image and displayed the original and control charted images. 
+
+The image on the left is the original grayscaled image and the one on the right is control chart constructed image.
+
+
+```{r}
+
+controlchartedphoto<-function(grayimage, filteredimage){
+
+  tempmat<-matrix(c(1), nrow = 512, ncol=512)
+  tempmat2<-matrix(c(1), nrow = 512, ncol=512)
+
+
+for (i in 1:512) {
+  tempmat[i,]<-tempmat[i,]*(1-(filteredimage[i,]>mean(filteredimage[i,])+3*sd(filteredimage[i,])))*(1-(filteredimage[i,]<mean(filteredimage[i,])-3*sd(filteredimage[i,])))
+}
+
+for (i in 1:512) {
+  tempmat2[,i]<-tempmat2[,i]*(1-(filteredimage[,i]>mean(filteredimage[,i])+3*sd(filteredimage[,i])))*(1-(filteredimage[,i]<mean(filteredimage[,i])-3*sd(filteredimage[,i])))
+}
+
+contchartedimg<-(t(grayimage)*tempmat2*tempmat)
+plot(c(0,1300), c(0,512), xlab = "Width", ylab = "Height")
+rasterImage(grayimage, 0, 0, 512, 512)
+rasterImage(contchartedimg,788,0,1300,512)
+
+}
+
+
+controlchartedphoto(grayimg1,filt1)
+controlchartedphoto(grayimg2,filt2)
+controlchartedphoto(grayimg3,filt3)
+controlchartedphoto(grayimg4,filt4)
+controlchartedphoto(grayimg5,filt5)
+controlchartedphoto(grayimg6,filt6)
+controlchartedphoto(grayimg7,filt7)
+controlchartedphoto(grayimg8,filt8)
+controlchartedphoto(grayimg9,filt9)
+controlchartedphoto(grayimg10,filt10)
+controlchartedphoto(grayimg11,filt11)
+controlchartedphoto(grayimg12,filt12)
+controlchartedphoto(grayimg13,filt13)
+controlchartedphoto(grayimg14,filt14)
+controlchartedphoto(grayimg15,filt15)
+controlchartedphoto(grayimg16,filt16)
+controlchartedphoto(grayimg17,filt17)
+controlchartedphoto(grayimg18,filt18)
+controlchartedphoto(grayimg19,filt19)
+controlchartedphoto(grayimg20,filt20)
+```
+
+### Discussion
+
+When we look at the gabor filters with given values, we can see that they are good at finding the defect types. After constructing control charts, it can also be seen that our control charts are good at finding the defects too. However there is a trend for circular types defects of images 18, 19 and 20. We can see there are also other small areas which are black labeled, meaning defects. They are wrong but can be eliminated by using bigger sigmas such as 4 sigma limits. The 4 sigma version is shown below by controlchartedphoto4sigma function for images 18,19 and 20.
+
+Other than that, image 11 has a large defect but our control chart only finds small portion of this defect. This is because we use three sigma limits. Large defect width results in most of the defected pixels to be inside the control limits. If we use two sigma limits, we can detect large width defects. Also , image 5 doesn't show and defects in our control charts. This is because the defect is very small in width and thus it can't be captured by the three sigma limits. However, if we change the limits to two sigma, this time it starts to detect also other very small lines as defect. The two sigma control charts and outputs are shown for image 5 and 11 below by the controlchartedphoto2sigma function.
+
+By considering these circular, large width and small width defects, we can construct different sigma limits for improvement but three sigma limits are working well in general.
+
+
+
+```{r}
+controlchartedphoto2sigma<-function(grayimage, filteredimage){
+  
+  tempmat<-matrix(c(1), nrow = 512, ncol=512)
+  tempmat2<-matrix(c(1), nrow = 512, ncol=512)
+  
+  
+  for (i in 1:512) {
+    tempmat[i,]<-tempmat[i,]*(1-(filteredimage[i,]>mean(filteredimage[i,])+2*sd(filteredimage[i,])))*(1-(filteredimage[i,]<mean(filteredimage[i,])-2*sd(filteredimage[i,])))
+  }
+  
+  for (i in 1:512) {
+    tempmat2[,i]<-tempmat2[,i]*(1-(filteredimage[,i]>mean(filteredimage[,i])+2*sd(filteredimage[,i])))*(1-(filteredimage[,i]<mean(filteredimage[,i])-2*sd(filteredimage[,i])))
+  }
+  
+  contchartedimg<-(t(grayimage)*tempmat2*tempmat)
+  plot(c(0,1300), c(0,512), xlab = "Width", ylab = "Height")
+  rasterImage(grayimage, 0, 0, 512, 512)
+  rasterImage(contchartedimg,788,0,1300,512)
+  
+}
+
+controlchartedphoto2sigma(grayimg5,filt5)
+controlchartedphoto2sigma(grayimg11,filt11)
+
+controlchartedphoto4sigma<-function(grayimage, filteredimage){
+  
+  tempmat<-matrix(c(1), nrow = 512, ncol=512)
+  tempmat2<-matrix(c(1), nrow = 512, ncol=512)
+  
+  
+  for (i in 1:512) {
+    tempmat[i,]<-tempmat[i,]*(1-(filteredimage[i,]>mean(filteredimage[i,])+4*sd(filteredimage[i,])))*(1-(filteredimage[i,]<mean(filteredimage[i,])-4*sd(filteredimage[i,])))
+  }
+  
+  for (i in 1:512) {
+    tempmat2[,i]<-tempmat2[,i]*(1-(filteredimage[,i]>mean(filteredimage[,i])+4*sd(filteredimage[,i])))*(1-(filteredimage[,i]<mean(filteredimage[,i])-4*sd(filteredimage[,i])))
+  }
+  
+  contchartedimg<-(t(grayimage)*tempmat2*tempmat)
+  plot(c(0,1300), c(0,512), xlab = "Width", ylab = "Height")
+  rasterImage(grayimage, 0, 0, 512, 512)
+  rasterImage(contchartedimg,788,0,1300,512)
+  
+}
+
+controlchartedphoto4sigma(grayimg18,filt18)
+controlchartedphoto4sigma(grayimg19,filt19)
+controlchartedphoto4sigma(grayimg20,filt20)
+```
+
+
+## Conclusions and Future Work
+
+Our current approach is consisting from assigning parameters for the images according to the defect type. However, if we have a larger dataset with a great number of images, such as 1000, with sufficient number of defects, at least 100 images for each defect, we could use machine learning algorithms to automatically detect the defect type. We could use different ML algorithms for each defect type by training and testing the algorithm on a random sample selected from the big image dataset. And we can use this algorithms on each image to detect whether there is a specific defect or not.
+
+Other than that, once we detect the much occurred defects, we could apply multiple gabor filters of the corresponding defects to all the images to detect if there is any defect in the image or not. The gabor filter parameters are found by using images with known defect types.
+
+## References
+
+Hanbay K., Talu M. F., Özgüven Ö F., 2016, Fabric defect detection systems and methods—A systematic literature review, Opt. Int. J. Light Electron. Opt., V.127, No.24, p:11960-11973
+[Fabric defect detection systems and methods—A systematic literature review](https://www.sciencedirect.com/science/article/pii/S0030402616311366)
+
+[Through the Eyes of Gabor Filter by Anuj Shah](https://medium.com/@anuj_shah/through-the-eyes-of-gabor-filter-17d1fdb3ac97)
+
+
+Yixiang Frank Zhang, Randall R. Bresee, “Fabric defect detection and classification using image analysis”, vol. 65 no. 1 1-9, Textile Research Journal January 1995
+[Fabric Defect Detection and Classification Using Image Analysis](https://journals.sagepub.com/doi/pdf/10.1177/004051759506500101) 
